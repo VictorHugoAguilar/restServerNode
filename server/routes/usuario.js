@@ -45,7 +45,7 @@ app.get('/usuario', function(req, res) {
             // contamos los registros antes de devolver los valores
             // en el primer parámetro pasamo el estado true que son los activos
             //  Usuario.count({}, (err, cantidad) => {
-            Usuario.count({ estado: true }, (err, cantidad) => {
+            Usuario.countDocuments({ estado: true }, (err, cantidad) => {
                 res.json({
                     ok: true,
                     cantidad: cantidad,
