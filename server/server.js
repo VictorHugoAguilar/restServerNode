@@ -1,7 +1,8 @@
+const color = require('colors');
 const express = require('express');
 const app = express();
-
 const bodyParser = require('body-parser');
+
 
 // MIDDLEWARE se disparan por cada peticion que hacemos
 // parse application/x - www - form - urlencoded
@@ -10,67 +11,36 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 
+// importamos el acceso a las rutas de las consulta rest
+app.use(require('./routes/usuario'));
+
+const mongoose = require('mongoose');
+
 // traemos el archivo de configuracion
 require('./config/config');
 
-// obtener registro
-app.get('/', (req, res) => {
-
-    res.json('App Rest Server');
-
+// conexion con la base de datos utilizando mongoose
+mongoose.connect('mongodb://localhost:27017/cafe', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
 });
 
-// obtener registro
-app.get('/usuario', (req, res) => {
-
-    res.json('App Rest Server - GET USUARIO');
-
+// comprobamos si se ha realizado la conexion success o fail
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', () => {
+    console.log('BD Online'.green);
 });
 
-// crear registro
-app.post('/usuario', (req, res) => {
-
-    // Capturamos en la peticions post lo que se envie en el cuerpo, cuando el bodyparse procese en put, delete, post
-    let body = req.body;
-
-    if (body.nombre === undefined) {
-
-        // devolvemos un código de respuesta en este caso de badRequest porque falta el nombre
-        res.status(400).json({
-            ok: false,
-            mensaje: 'El nombre es necesario',
-        });
-
-    } else {
-
-        //'App Rest Server - POST USUARIO'
-        res.json({ persona: body });
-
-    }
-});
-
-// actualizar registros
-app.put('/usuario/:id', (req, res) => {
-
-    // obtener el parametro que pasamos por la barra
-    let id = req.params.id;
-
-    //'App Rest Server - PUT USUARIO'
-    res.json({
-        id: id
-    });
-
-});
-
-// borrar registros
-app.delete('/usuario', (req, res) => {
-
-    res.json('App Rest Server - DELETE USUARIO');
-
-});
-
+// Creamos la escucha del servidor
 app.listen(process.env.PORT, () => {
-
+    console.log('Escuchando desde ' + fecha());
     console.log('Escuchando el puerto ' + process.env.PORT);
 
 });
+
+const fecha = () => {
+    let fecha = new Date();
+    return fecha.getHours() + ":" + fecha.getMinutes() + ":" + fecha.getSeconds() + ":" + fecha.getMilliseconds();
+}
