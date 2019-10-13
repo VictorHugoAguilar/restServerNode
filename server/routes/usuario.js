@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
 });
 
 //obtener registro de usuarios
-app.get('/usuario', (req, res) => {
+app.get('/usuario', function(req, res) {
 
     // creamos una variable para hacer una paginación
     let desde = req.query.desde || 0;
@@ -28,7 +28,10 @@ app.get('/usuario', (req, res) => {
 
     // podemos excluir algun campo en el segundo parametro de la 
     // funcion de find ({}, 'aqui seguidos sin comas')
-    Usuario.find({}, 'nombre email role estado google img')
+    // Ahora en el primer parametro pasamos que necesitamos todos los
+    // usuario pero con el estado en true
+    // Usuario.find({}, 'nombre email role estado google img')
+    Usuario.find({ estado: true }, 'nombre email role estado google img')
         .skip(desde)
         .limit(limite)
         .exec((err, usuarios) => {
@@ -40,7 +43,9 @@ app.get('/usuario', (req, res) => {
             }
 
             // contamos los registros antes de devolver los valores
-            Usuario.count({}, (err, cantidad) => {
+            // en el primer parámetro pasamo el estado true que son los activos
+            //  Usuario.count({}, (err, cantidad) => {
+            Usuario.count({ estado: true }, (err, cantidad) => {
                 res.json({
                     ok: true,
                     cantidad: cantidad,
@@ -51,7 +56,7 @@ app.get('/usuario', (req, res) => {
 });
 
 // crear registro
-app.post('/usuario', (req, res) => {
+app.post('/usuario', function(req, res) {
 
     // Capturamos en la peticions post lo que se envie en el cuerpo, cuando el bodyparse procese en put, delete, post
     let body = req.body;
@@ -83,7 +88,7 @@ app.post('/usuario', (req, res) => {
 });
 
 // actualizar registros
-app.put('/usuario/:id', (req, res) => {
+app.put('/usuario/:id', function(req, res) {
 
     // obtener el parametro que pasamos por la barra
     let id = req.params.id;
@@ -104,6 +109,16 @@ app.put('/usuario/:id', (req, res) => {
             });
         }
 
+        //en caso de no encontrar un usuario tenemos pasar el error de no encontrado
+        if (!usuarioDB) {
+            return res.status(400).json({
+                ok: false,
+                error: {
+                    message: 'Usuario no encontrado'
+                }
+            });
+        }
+
         //'App Rest Server - PUT USUARIO'
         res.json({
             ok: true,
@@ -112,12 +127,46 @@ app.put('/usuario/:id', (req, res) => {
     })
 });
 
-// borrar registros
-app.delete('/usuario', (req, res) => {
 
-    res.json('App Rest Server - DELETE USUARIO');
+// cambiar el estado sin  borrar registros definitivamente 
+// utilizando la siguiente ruta /usuario/:id
+app.delete('/usuario/:id', (req, res) => {
+    // obtenemos el id que pasamos por parámetro
+    let id = req.params.id;
 
+    // creamos un objeto que cambia el estado
+    let cambiaEstado = {
+        estado: false
+    };
+
+    // con este metodo buscamos un usuario por id y luego lo eliminamos
+    Usuario.findByIdAndUpdate(id, cambiaEstado, { new: true }, (err, usuarioBorrado) => {
+        // si se produce un error, devolvemos el estado 400, y el error
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                err
+            });
+        }
+
+        //en caso de no encontrar un usuario tenemos pasar el error de no encontrado
+        if (!usuarioBorrado) {
+            return res.status(400).json({
+                ok: false,
+                error: {
+                    message: 'Usuario no encontrado'
+                }
+            });
+        }
+
+        // si se ha podido eliminar devolvemos un ok, y el usuario borrado
+        res.json({
+            ok: true,
+            usuario: usuarioBorrado
+        });
+    });
 });
+
 
 
 module.exports = app;
