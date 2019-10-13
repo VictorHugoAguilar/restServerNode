@@ -20,7 +20,9 @@ const mongoose = require('mongoose');
 require('./config/config');
 
 // conexion con la base de datos utilizando mongoose
-mongoose.connect('mongodb://localhost:27017/cafe', {
+// mongoose.connect('mongodb://localhost:27017/cafe', {
+// mongodb+srv://victoruugo:Victor1985@cluster0-6bmas.mongodb.net/cafe
+mongoose.connect(process.env.URLDB, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex: true
